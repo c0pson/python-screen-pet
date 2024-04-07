@@ -23,14 +23,14 @@ class LoadConfig():
                 config = self.default_config
         return config
 
-    def get_cat_position(self):
-        return self.config["cat_position"]
+    def get_config(self):
+        return self.config
 
 class SettingWindow(ctk.CTkToplevel):
     def __init__(self, master):
         super().__init__(fg_color='#000000')
         self.mas = master
-        self.cat_pos = LoadConfig().get_cat_position()
+        self.cat_pos = LoadConfig().get_config()
         self.title('Settings')
         self.buttons()
 
@@ -42,12 +42,20 @@ class SettingWindow(ctk.CTkToplevel):
         down_button.pack()
 
     def go_up(self):
-        self.mas.geometry(f'+{self.mas.winfo_x()}+{self.cat_pos-1}')
-        self.cat_pos -= 1
+        print(self.cat_pos)
+        print(self.cat_pos["cat_position"])
+        self.mas.geometry(f'+{self.mas.winfo_x()}+{self.cat_pos["cat_position"]-1}')
+        self.cat_pos["cat_position"] -= 1
+        self.save_settings()
 
     def go_down(self):
-        self.mas.geometry(f'+{self.mas.winfo_x()}+{self.cat_pos+1}')
-        self.cat_pos += 1
+        self.mas.geometry(f'+{self.mas.winfo_x()}+{self.cat_pos["cat_position"]+1}')
+        self.cat_pos["cat_position"] += 1
+        self.save_settings()
+
+    def save_settings(self):
+        with open('config.json', 'w') as file:
+            json.dump(self.cat_pos, file)
 
 class IconTray():
     def __init__(self, master) -> None:
