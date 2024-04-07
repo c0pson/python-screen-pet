@@ -1,16 +1,31 @@
+from ctypes import windll, byref, sizeof, c_int
 from pystray import Icon, Menu, MenuItem
 import customtkinter as ctk
+from enum import Enum
 from PIL import Image
 import threading
 import random
 import json
 import os
 
+class Color(str, Enum):
+    BACK =   '#B26456'
+    FRAME2 = '#F7C566'
+    BUTT1 =  '#EA9840'
+    BUTT2 =  '#DC6B19'
+    BUTT3 =  '#EEB27B'
+    TEXT =   '#FFF8DC'
+
+def bar_color(app):
+    HWND = windll.user32.GetParent(app.winfo_id())
+    DWMWA_CAPTION_COLOR = 35
+    COLOR_1 = 0x005664B2
+    windll.dwmapi.DwmSetWindowAttribute(HWND, DWMWA_CAPTION_COLOR,
+                                        byref(c_int(COLOR_1)), sizeof(c_int)) 
+
 class LoadConfig():
 
-    default_config = {
-            "cat_position": 947
-        }
+    default_config = {"cat_position": 947}
 
     def __init__(self) -> None:
         self.config = self.open_config_file()
@@ -28,22 +43,27 @@ class LoadConfig():
 
 class SettingWindow(ctk.CTkToplevel):
     def __init__(self, master):
-        super().__init__(fg_color='#000000')
+        super().__init__(fg_color=Color.BACK)
+        self.after(201, lambda: self.iconbitmap('icons\\setting_icon.ico'))
         self.mas = master
         self.cat_pos = LoadConfig().get_config()
+        self.geometry('300x120+200+200')
         self.title('Settings')
         self.buttons()
+        bar_color(self)
 
     def buttons(self):
-        up_button = ctk.CTkButton(self, text='UP', command=self.go_up)
-        up_button.pack()
+        up_button = ctk.CTkButton(self, text='UP', command=self.go_up,
+                                    fg_color=Color.BUTT1, hover_color=Color.BUTT3,
+                                    text_color=Color.TEXT)
+        up_button.pack(side='top', padx=10, pady=10, anchor='center', expand=True)
 
-        down_button = ctk.CTkButton(self, text='DOWN', command=self.go_down)
-        down_button.pack()
+        down_button = ctk.CTkButton(self, text='DOWN', command=self.go_down,
+                                    fg_color=Color.BUTT1, hover_color=Color.BUTT3,
+                                    text_color=Color.TEXT)
+        down_button.pack(side='top', padx=10, pady=10, anchor='center', expand=True)
 
     def go_up(self):
-        print(self.cat_pos)
-        print(self.cat_pos["cat_position"])
         self.mas.geometry(f'+{self.mas.winfo_x()}+{self.cat_pos["cat_position"]-1}')
         self.cat_pos["cat_position"] -= 1
         self.save_settings()
@@ -71,7 +91,9 @@ class IconTray():
                     menu=Menu(
                         MenuItem('Hide', self.hide_kitty, checked=lambda item: self.show_state),
                         MenuItem('Show', self.show_kitty, checked=lambda item: self.hide_state),
+                        Menu.SEPARATOR,
                         MenuItem('Settings', self.settings),
+                        Menu.SEPARATOR,
                         MenuItem('Exit', self.exit_app)))
         icon.run()
 
@@ -192,9 +214,9 @@ class MainFrame(ctk.CTkLabel):
 class App(ctk.CTk):
     def __init__(self) -> None:
         super().__init__()
-        self.geometry("+550+947")
-        self.wm_attributes("-topmost", True)
-        self.wm_attributes("-transparentcolor", "white")
+        self.geometry(f'+550+{LoadConfig().get_config()["cat_position"]}')
+        self.wm_attributes('-topmost', True)
+        self.wm_attributes('-transparentcolor', 'white')
         self.lift()
         self.grab_set()
         self.overrideredirect(True)
