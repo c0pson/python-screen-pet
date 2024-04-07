@@ -6,6 +6,7 @@ from PIL import Image
 import threading
 import random
 import json
+import sys
 import os
 
 class Color(str, Enum):
@@ -21,7 +22,14 @@ def bar_color(app):
     DWMWA_CAPTION_COLOR = 35
     COLOR_1 = 0x005664B2
     windll.dwmapi.DwmSetWindowAttribute(HWND, DWMWA_CAPTION_COLOR,
-                                        byref(c_int(COLOR_1)), sizeof(c_int)) 
+                                        byref(c_int(COLOR_1)), sizeof(c_int))
+
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS2
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 class LoadConfig():
 
@@ -31,7 +39,7 @@ class LoadConfig():
         self.config = self.open_config_file()
 
     def open_config_file(self) -> str:
-        with open('config.json', 'r') as file:
+        with open(resource_path('config.json'), 'r') as file:
             try:
                 config = json.load(file)
             except FileNotFoundError:
@@ -44,7 +52,7 @@ class LoadConfig():
 class SettingWindow(ctk.CTkToplevel):
     def __init__(self, master):
         super().__init__(fg_color=Color.BACK)
-        self.after(201, lambda: self.iconbitmap('icons\\setting_icon.ico'))
+        self.after(201, lambda: self.iconbitmap(resource_path('icons\\setting_icon.ico')))
         self.mas = master
         self.cat_pos = LoadConfig().get_config()
         self.geometry('300x120+200+200')
@@ -74,7 +82,7 @@ class SettingWindow(ctk.CTkToplevel):
         self.save_settings()
 
     def save_settings(self):
-        with open('config.json', 'w') as file:
+        with open(resource_path('config.json'), 'w') as file:
             json.dump(self.cat_pos, file)
 
 class IconTray():
@@ -86,7 +94,7 @@ class IconTray():
         self.create_tray_icon()
 
     def create_tray_icon(self) -> None:
-        cat_icon = Image.open('icon.ico')
+        cat_icon = Image.open(resource_path('icons\\icon.ico'))
         icon = Icon('Screen kitty', icon=cat_icon, title='Screen kitty',
                     menu=Menu(
                         MenuItem('Hide', self.hide_kitty, checked=lambda item: self.show_state),
@@ -125,8 +133,8 @@ class LoadAllSprites():
         self.load_images()
 
     def load_images(self) -> None:
-        for image in os.listdir('assets'):
-            img_ = Image.open(f'assets\\{image}')
+        for image in os.listdir(resource_path('assets')):
+            img_ = Image.open(resource_path(f'assets\\{image}'))
             img = ctk.CTkImage(dark_image=img_, size=img_.size)
             self.all_sprites.append(img)
 
