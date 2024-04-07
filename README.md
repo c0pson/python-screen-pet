@@ -1,8 +1,8 @@
 
-# Python kitty screen pet 
+# Python kitten screen pet 
 
-Kitty screen pet! 
+Kitten screen pet! 
 
 ![Logo](https://raw.githubusercontent.com/c0pson/python-screen-pet/main/icons/icon.ico)
 
-Potato performance python app with interactive kitty walking on screen.
+Potato performance python app with interactive cat walking on screen.
