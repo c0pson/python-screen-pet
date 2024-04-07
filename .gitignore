@@ -2,3 +2,4 @@ build/
 dist/
 Kitty.spec
 icons/test11.iss
+*exe
