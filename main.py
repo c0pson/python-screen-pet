@@ -10,12 +10,12 @@ import sys
 import os
 
 class Color(str, Enum):
-    BACK =   '#B26456'
-    FRAME2 = '#F7C566'
-    BUTT1 =  '#EA9840'
-    BUTT2 =  '#DC6B19'
-    BUTT3 =  '#EEB27B'
-    TEXT =   '#FFF8DC'
+    BACK =  '#B26456'
+    FRAME = '#A79277'
+    BUTT1 = '#EA9840'
+    BUTT2 = '#DC6B19'
+    BUTT3 = '#EEB27B'
+    TEXT =  '#FFF8DC'
 
 def bar_color(app):
     HWND = windll.user32.GetParent(app.winfo_id())
@@ -54,36 +54,60 @@ class SettingWindow(ctk.CTkToplevel):
         super().__init__(fg_color=Color.BACK)
         self.after(201, lambda: self.iconbitmap(resource_path('icons\\setting_icon.ico')))
         self.mas = master
+        self.offset_size = 1
         self.cat_pos = LoadConfig().get_config()
-        self.geometry('300x120+200+200')
+        self.geometry('270x220+200+200')
         self.title('Settings')
         self.buttons()
+        self.slider()
         bar_color(self)
 
     def buttons(self):
-        up_button = ctk.CTkButton(self, text='UP', command=self.go_up,
+        self.button_frame = ctk.CTkFrame(self, fg_color=Color.FRAME)
+        self.button_frame.pack(side='left', padx=10, pady=10)
+
+        up_button = ctk.CTkButton(self.button_frame, text='UP', command=self.go_up,
                                     fg_color=Color.BUTT1, hover_color=Color.BUTT3,
                                     text_color=Color.TEXT)
         up_button.pack(side='top', padx=10, pady=10, anchor='center', expand=True)
 
-        down_button = ctk.CTkButton(self, text='DOWN', command=self.go_down,
+        down_button = ctk.CTkButton(self.button_frame, text='DOWN', command=self.go_down,
                                     fg_color=Color.BUTT1, hover_color=Color.BUTT3,
                                     text_color=Color.TEXT)
         down_button.pack(side='top', padx=10, pady=10, anchor='center', expand=True)
 
+        self.pixels_label = ctk.CTkLabel(self.button_frame, text=f'Move cat by: {int(self.offset_size)}px',
+                                        text_color=Color.TEXT)
+        self.pixels_label.pack(side='bottom', padx=10, pady=10)
+
     def go_up(self):
-        self.mas.geometry(f'+{self.mas.winfo_x()}+{self.cat_pos["cat_position"]-1}')
-        self.cat_pos["cat_position"] -= 1
+        self.mas.geometry(f'+{self.mas.winfo_x()}+{self.cat_pos["cat_position"]-self.offset_size}')
+        self.cat_pos["cat_position"] -= self.offset_size
         self.save_settings()
 
     def go_down(self):
-        self.mas.geometry(f'+{self.mas.winfo_x()}+{self.cat_pos["cat_position"]+1}')
-        self.cat_pos["cat_position"] += 1
+        self.mas.geometry(f'+{self.mas.winfo_x()}+{self.cat_pos["cat_position"]+self.offset_size}')
+        self.cat_pos["cat_position"] += self.offset_size
         self.save_settings()
 
     def save_settings(self):
         with open(resource_path('config.json'), 'w') as file:
             json.dump(self.cat_pos, file)
+
+    def slider(self):
+        self.slider_frame = ctk.CTkFrame(self, fg_color=Color.FRAME)
+        self.slider_frame.pack(side='right', padx=10, pady=10)
+
+        pixel_slider = ctk.CTkSlider(self.slider_frame, from_=1, to=15, number_of_steps=14,
+                                    orientation='vertical', command=self.change_offset_size,
+                                    border_width=1, fg_color=Color.BUTT1, progress_color=Color.BUTT3,
+                                    button_color=Color.TEXT, hover=False)
+        pixel_slider.set(1)
+        pixel_slider.pack(side='top', padx=10, pady=10)
+
+    def change_offset_size(self, value):
+        self.offset_size = value
+        self.pixels_label.configure(text=f'Move cat by: {int(self.offset_size)}px')
 
 class IconTray():
     def __init__(self, master) -> None:
@@ -174,7 +198,7 @@ class MainFrame(ctk.CTkLabel):
             self.direction = 'right'
             self.current_frame = 4
             self.counter = (random.randrange(20, 200))
-        elif self.master.winfo_x() >= self.master.winfo_width()-120:
+        elif self.master.winfo_x() >= self.master.winfo_screenwidth()-120:
             self.direction = 'left'
             self.current_frame = 0
             self.counter = (random.randrange(20, 200))
