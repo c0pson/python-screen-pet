@@ -174,7 +174,7 @@ class MainFrame(ctk.CTkLabel):
             self.direction = 'right'
             self.current_frame = 4
             self.counter = (random.randrange(20, 200))
-        elif self.master.winfo_x() >= 1800:
+        elif self.master.winfo_x() >= self.master.winfo_width()-120:
             self.direction = 'left'
             self.current_frame = 0
             self.counter = (random.randrange(20, 200))
