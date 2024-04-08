@@ -57,17 +57,18 @@ class SettingWindow(ctk.CTkToplevel):
         self.mas = master
         self.offset_size = 1
         self.cat_pos = LoadConfig().get_config()
-        self.geometry('270x220+200+200')
-        self.maxsize(500, 500)
+        self.geometry('340x300+200+200')
+        self.maxsize(600, 400)
+        self.minsize(300, 260)
         self.title('Settings')
+        self.main_frame = ctk.CTkFrame(self, fg_color=Color.FRAME, border_color=Color.TEXT, border_width=4)
+        self.main_frame.pack(side='left', padx=10, pady=10, expand=True)
         self.buttons()
         self.slider()
-        print(self)
-        print(self.mas.winfo_children())
         bar_color(self)
 
     def buttons(self):
-        self.button_frame = ctk.CTkFrame(self, fg_color=Color.FRAME)
+        self.button_frame = ctk.CTkFrame(self.main_frame, fg_color=Color.FRAME)
         self.button_frame.pack(side='left', padx=10, pady=10, expand=True)
 
         up_button = ctk.CTkButton(self.button_frame, text='UP', command=self.go_up,
@@ -105,7 +106,7 @@ class SettingWindow(ctk.CTkToplevel):
             json.dump(self.cat_pos, file)
 
     def slider(self):
-        self.slider_frame = ctk.CTkFrame(self, fg_color=Color.FRAME)
+        self.slider_frame = ctk.CTkFrame(self.main_frame, fg_color=Color.FRAME)
         self.slider_frame.pack(side='right', padx=10, pady=10, expand=True)
 
         pixel_slider = ctk.CTkSlider(self.slider_frame, from_=1, to=15, number_of_steps=14,
