@@ -136,7 +136,7 @@ class Fish(ctk.CTkToplevel):
         self.overrideredirect(True)
         self.old_x = None
         self.old_y = None
-        self.text = ctk.CTkLabel(self, text='', text_color=Color.TEXT, image=self.sprites[0])
+        self.text = ctk.CTkLabel(self, text='', text_color=Color.TEXT, image=self.sprites[random.randrange(0, len(self.sprites))])
         self.text.pack()
         self.after_id = []
         self.bind('<Button-1>', self.click_window)
