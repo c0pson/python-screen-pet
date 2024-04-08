@@ -57,6 +57,7 @@ class SettingWindow(ctk.CTkToplevel):
         self.offset_size = 1
         self.cat_pos = LoadConfig().get_config()
         self.geometry('270x220+200+200')
+        self.maxsize(500, 500)
         self.title('Settings')
         self.buttons()
         self.slider()
@@ -64,7 +65,7 @@ class SettingWindow(ctk.CTkToplevel):
 
     def buttons(self):
         self.button_frame = ctk.CTkFrame(self, fg_color=Color.FRAME)
-        self.button_frame.pack(side='left', padx=10, pady=10)
+        self.button_frame.pack(side='left', padx=10, pady=10, expand=True)
 
         up_button = ctk.CTkButton(self.button_frame, text='UP', command=self.go_up,
                                     fg_color=Color.BUTT1, hover_color=Color.BUTT3,
@@ -78,7 +79,13 @@ class SettingWindow(ctk.CTkToplevel):
 
         self.pixels_label = ctk.CTkLabel(self.button_frame, text=f'Move cat by: {int(self.offset_size)}px',
                                         text_color=Color.TEXT)
-        self.pixels_label.pack(side='bottom', padx=10, pady=10)
+        self.pixels_label.pack(side='top', padx=10, pady=10)
+
+        open_config_file = ctk.CTkButton(self.button_frame, text='Open config.json',
+                                        command=self.open_json_config_file,
+                                        fg_color=Color.BUTT1, hover_color=Color.BUTT3,
+                                        text_color=Color.TEXT)
+        open_config_file.pack(side='top', padx=10, pady=10, anchor='center', expand=True)
 
     def go_up(self):
         self.mas.geometry(f'+{self.mas.winfo_x()}+{self.cat_pos["cat_position"]-self.offset_size}')
@@ -96,7 +103,7 @@ class SettingWindow(ctk.CTkToplevel):
 
     def slider(self):
         self.slider_frame = ctk.CTkFrame(self, fg_color=Color.FRAME)
-        self.slider_frame.pack(side='right', padx=10, pady=10)
+        self.slider_frame.pack(side='right', padx=10, pady=10, expand=True)
 
         pixel_slider = ctk.CTkSlider(self.slider_frame, from_=1, to=15, number_of_steps=14,
                                     orientation='vertical', command=self.change_offset_size,
@@ -108,6 +115,9 @@ class SettingWindow(ctk.CTkToplevel):
     def change_offset_size(self, value):
         self.offset_size = value
         self.pixels_label.configure(text=f'Move cat by: {int(self.offset_size)}px')
+
+    def open_json_config_file(self):
+        os.system(f'notepad {resource_path('config.json')}')
 
 class IconTray():
     def __init__(self, master) -> None:
@@ -246,12 +256,13 @@ class MainFrame(ctk.CTkLabel):
 class App(ctk.CTk):
     def __init__(self) -> None:
         super().__init__()
-        self.geometry(f'+550+{LoadConfig().get_config()["cat_position"]}')
+        self.geometry(f'+{random.randrange(2, self.winfo_screenwidth())}+{LoadConfig().get_config()["cat_position"]}')
         self.wm_attributes('-topmost', True)
         self.wm_attributes('-transparentcolor', 'white')
         self.lift()
         self.grab_set()
         self.overrideredirect(True)
+        ctk.deactivate_automatic_dpi_awareness() # TODO: make it changeable in setting
         all_sprites = LoadAllSprites().get_images()
         MainFrame(self, all_sprites)
 
