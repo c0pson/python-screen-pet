@@ -4,6 +4,7 @@ import customtkinter as ctk
 from enum import Enum
 from PIL import Image
 import threading
+import pyautogui
 import random
 import json
 import sys
@@ -61,6 +62,8 @@ class SettingWindow(ctk.CTkToplevel):
         self.title('Settings')
         self.buttons()
         self.slider()
+        print(self)
+        print(self.mas.winfo_children())
         bar_color(self)
 
     def buttons(self):
@@ -117,7 +120,69 @@ class SettingWindow(ctk.CTkToplevel):
         self.pixels_label.configure(text=f'Move cat by: {int(self.offset_size)}px')
 
     def open_json_config_file(self):
-        os.system(f'notepad {resource_path('config.json')}')
+        try:
+            os.system(f'notepad {resource_path('config.json')}')
+        except SystemError:
+            pass
+
+class Fish(ctk.CTkToplevel):
+    def __init__(self, master):
+        super().__init__(fg_color='white')
+        self.sprites = LoadAllSprites('fish_assets').get_images()
+        self.geometry(f'+{random.randrange(10, pyautogui.size()[0])}+{LoadConfig().get_config()["cat_position"]-300}')
+        self.wm_attributes('-topmost', True)
+        self.wm_attributes('-transparentcolor', 'white')
+        self.lift()
+        self.overrideredirect(True)
+        self.old_x = None
+        self.old_y = None
+        self.text = ctk.CTkLabel(self, text='', text_color=Color.TEXT, image=self.sprites[0])
+        self.text.pack()
+        self.after_id = []
+        self.bind('<Button-1>', self.click_window)
+        self.bind('<B1-Motion>', self.move_window)
+        self.bind('<ButtonRelease>', self.on_release)
+        self.detect_if_feeding()
+        self.gravitation()
+
+    def click_window(self, event):
+        for item in self.after_id:
+            self.after_cancel(item)
+
+    def move_window(self, event):
+        if self.old_x and self.old_y:
+            geometry = self.geometry()
+            position = geometry.split('+')[1:]
+            x_position, y_position = map(int, position)
+            self.geometry(f'+{x_position+(event.x-self.old_x)}+{y_position+(event.y-self.old_y)}')
+        else:
+            self.old_x = event.x
+            self.old_y = event.y
+
+    def on_release(self, event):
+        self.old_x = None
+        self.old_y = None
+        self.gravitation()
+
+    def gravitation(self):
+        with open(resource_path('config.json'), 'r'):
+            ground_position = LoadConfig().get_config()["cat_position"]
+        geometry = self.geometry()
+        position = geometry.split('+')[1:]
+        x_position, y_position = map(int, position)
+        for _ in range(10):
+            if y_position < ground_position:
+                self.geometry(f'+{x_position}+{y_position+1}')
+        if y_position < ground_position:
+            self.after_id.append(self.after(1, self.gravitation))
+
+    def detect_if_feeding(self):
+        if self.master.winfo_x() <= self.winfo_x()+self.winfo_width()//2 and self.master.winfo_x()+self.master.winfo_width()//2 >= self.winfo_x():
+            if self.winfo_y() >= LoadConfig().get_config()["cat_position"]-60:
+                print('feeding')
+                self.click_window(None)
+                self.master.after(10, self.destroy)
+        self.after(201, self.detect_if_feeding)
 
 class IconTray():
     def __init__(self, master) -> None:
@@ -154,7 +219,7 @@ class IconTray():
         self.master.deiconify()
 
     def settings(self):
-        if len(self.master.winfo_children()) > 1:
+        if len(self.master.winfo_children()) > 2:
             return
         self.top_level = SettingWindow(self.master)
 
@@ -162,13 +227,14 @@ class IconTray():
         os._exit(0)
 
 class LoadAllSprites():
-    def __init__(self) -> None:
+    def __init__(self, path) -> None:
         self.all_sprites = []
+        self.path = path
         self.load_images()
 
     def load_images(self) -> None:
-        for image in os.listdir(resource_path('assets')):
-            img_ = Image.open(resource_path(f'assets\\{image}'))
+        for image in os.listdir(resource_path(self.path)):
+            img_ = Image.open(resource_path(f'{self.path}\\{image}'))
             img = ctk.CTkImage(dark_image=img_, size=img_.size)
             self.all_sprites.append(img)
 
@@ -260,10 +326,10 @@ class App(ctk.CTk):
         self.wm_attributes('-topmost', True)
         self.wm_attributes('-transparentcolor', 'white')
         self.lift()
-        self.grab_set()
+        self.bind('<Button-1>', lambda event: Fish(self))
         self.overrideredirect(True)
         ctk.deactivate_automatic_dpi_awareness() # TODO: make it changeable in setting
-        all_sprites = LoadAllSprites().get_images()
+        all_sprites = LoadAllSprites('assets').get_images()
         MainFrame(self, all_sprites)
 
 if __name__ == "__main__":
