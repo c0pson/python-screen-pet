@@ -123,32 +123,34 @@ class SettingWindow(ctk.CTkToplevel):
     def open_json_config_file(self):
         try:
             os.system(f'notepad {resource_path('config.json')}')
+            raise SystemError('Not a windows platform')
         except SystemError:
             pass
 
 class Fish(ctk.CTkToplevel):
-    def __init__(self, master):
+    def __init__(self, loaded_sprites):
         super().__init__(fg_color='white')
-        self.sprites = LoadAllSprites('fish_assets').get_images()
+        self.sprites = loaded_sprites
         self.geometry(f'+{random.randrange(10, pyautogui.size()[0])}+{LoadConfig().get_config()["cat_position"]-300}')
+        # for some reason tkinter module for screen size is not working as intended
         self.wm_attributes('-topmost', True)
         self.wm_attributes('-transparentcolor', 'white')
         self.lift()
         self.overrideredirect(True)
         self.old_x = None
         self.old_y = None
-        self.text = ctk.CTkLabel(self, text='', text_color=Color.TEXT, image=self.sprites[random.randrange(0, len(self.sprites))])
+        self.text = ctk.CTkLabel(self, text='', text_color=Color.TEXT,
+                                image=self.sprites[random.randrange(0, len(self.sprites))])
         self.text.pack()
-        self.after_id = []
+        self.after_id = None
         self.bind('<Button-1>', self.click_window)
         self.bind('<B1-Motion>', self.move_window)
         self.bind('<ButtonRelease>', self.on_release)
-        self.detect_if_feeding()
         self.gravitation()
+        self.detect_if_feeding()
 
     def click_window(self, event):
-        for item in self.after_id:
-            self.after_cancel(item)
+        self.after_cancel(self.after_id)
 
     def move_window(self, event):
         if self.old_x and self.old_y:
@@ -171,16 +173,14 @@ class Fish(ctk.CTkToplevel):
         geometry = self.geometry()
         position = geometry.split('+')[1:]
         x_position, y_position = map(int, position)
-        for _ in range(10):
-            if y_position < ground_position:
-                self.geometry(f'+{x_position}+{y_position+1}')
         if y_position < ground_position:
-            self.after_id.append(self.after(1, self.gravitation))
+            self.geometry(f'+{x_position}+{y_position+3}')
+        if y_position < ground_position:
+            self.after_id = (self.after(1, self.gravitation))
 
     def detect_if_feeding(self):
         if self.master.winfo_x() <= self.winfo_x()+self.winfo_width()//2 and self.master.winfo_x()+self.master.winfo_width()//2 >= self.winfo_x():
             if self.winfo_y() >= LoadConfig().get_config()["cat_position"]-60:
-                print('feeding')
                 self.click_window(None)
                 self.master.after(10, self.destroy)
         self.after(201, self.detect_if_feeding)
@@ -220,7 +220,7 @@ class IconTray():
         self.master.deiconify()
 
     def settings(self):
-        if len(self.master.winfo_children()) > 2:
+        if len(self.master.winfo_children()) > 3:
             return
         self.top_level = SettingWindow(self.master)
 
@@ -241,6 +241,21 @@ class LoadAllSprites():
 
     def get_images(self) -> None:
         return self.all_sprites
+
+class Stats(ctk.CTkToplevel):
+    def __init__(self):
+        super().__init__(fg_color='white')
+        self.wm_attributes('-topmost', True)
+        self.wm_attributes('-transparentcolor', 'white')
+        self.lift()
+        self.overrideredirect(True)
+
+    # TODO: design for status bar
+    def display_stats(self):
+        ...
+
+    def update_stats(self):
+        ...
 
 class MainFrame(ctk.CTkLabel):
     def __init__(self, master, sprites) -> None:
@@ -323,15 +338,20 @@ class MainFrame(ctk.CTkLabel):
 class App(ctk.CTk):
     def __init__(self) -> None:
         super().__init__()
+        self.fish_sprites = LoadAllSprites('fish_assets').get_images()
         self.geometry(f'+{random.randrange(2, self.winfo_screenwidth())}+{LoadConfig().get_config()["cat_position"]}')
         self.wm_attributes('-topmost', True)
         self.wm_attributes('-transparentcolor', 'white')
         self.lift()
-        self.bind('<Button-1>', lambda event: Fish(self))
+        self.bind('<Button-1>', lambda e: self.create_fish(e))
         self.overrideredirect(True)
         ctk.deactivate_automatic_dpi_awareness() # TODO: make it changeable in setting
         all_sprites = LoadAllSprites('assets').get_images()
         MainFrame(self, all_sprites)
+        Stats()
+
+    def create_fish(self, event):
+        Fish(self.fish_sprites)
 
 if __name__ == "__main__":
     app = App()
