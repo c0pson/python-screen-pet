@@ -54,18 +54,18 @@ class SettingWindow(ctk.CTkToplevel):
     def __init__(self, master):
         super().__init__(fg_color=Color.BACK)
         self.after(201, lambda: self.iconbitmap(resource_path('icons\\setting_icon.ico')))
+        bar_color(self)
+        self.geometry('340x300+200+200')
         self.mas = master
         self.offset_size = 1
-        self.cat_pos = LoadConfig().get_config()
-        self.geometry('340x300+200+200')
-        self.maxsize(600, 400)
-        self.minsize(300, 260)
         self.title('Settings')
         self.main_frame = ctk.CTkFrame(self, fg_color=Color.FRAME, border_color=Color.TEXT, border_width=4)
         self.main_frame.pack(side='left', padx=10, pady=10, expand=True)
         self.buttons()
         self.slider()
-        bar_color(self)
+        self.maxsize(600, 400)
+        self.minsize(300, 260)
+        self.cat_pos = LoadConfig().get_config()
 
     def buttons(self):
         self.button_frame = ctk.CTkFrame(self.main_frame, fg_color=Color.FRAME)
@@ -173,8 +173,8 @@ class Fish(ctk.CTkToplevel):
         geometry = self.geometry()
         position = geometry.split('+')[1:]
         x_position, y_position = map(int, position)
-        if y_position < ground_position:
-            self.geometry(f'+{x_position}+{y_position+3}')
+        if y_position < ground_position + 1:
+            self.geometry(f'+{x_position}+{y_position+(ground_position-y_position)%3+1}')
         if y_position < ground_position:
             self.after_id = (self.after(1, self.gravitation))
 
@@ -220,8 +220,9 @@ class IconTray():
         self.master.deiconify()
 
     def settings(self):
-        if len(self.master.winfo_children()) > 3:
-            return
+        for item in self.master.winfo_children():
+            if 'settingwindow' in item._name:
+                return
         self.top_level = SettingWindow(self.master)
 
     def exit_app(self) -> None:
@@ -338,20 +339,17 @@ class MainFrame(ctk.CTkLabel):
 class App(ctk.CTk):
     def __init__(self) -> None:
         super().__init__()
+        ctk.deactivate_automatic_dpi_awareness() # TODO: make it changeable in setting
         self.fish_sprites = LoadAllSprites('fish_assets').get_images()
         self.geometry(f'+{random.randrange(2, self.winfo_screenwidth())}+{LoadConfig().get_config()["cat_position"]}')
         self.wm_attributes('-topmost', True)
         self.wm_attributes('-transparentcolor', 'white')
         self.lift()
-        self.bind('<Button-1>', lambda e: self.create_fish(e))
         self.overrideredirect(True)
-        ctk.deactivate_automatic_dpi_awareness() # TODO: make it changeable in setting
+        self.bind('<Button-1>', lambda e: Fish(self.fish_sprites))
         all_sprites = LoadAllSprites('assets').get_images()
         MainFrame(self, all_sprites)
-        Stats()
-
-    def create_fish(self, event):
-        Fish(self.fish_sprites)
+        self.after(201, Stats)
 
 if __name__ == "__main__":
     app = App()
