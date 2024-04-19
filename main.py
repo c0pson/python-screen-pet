@@ -132,7 +132,6 @@ class Fish(ctk.CTkToplevel):
         super().__init__(fg_color='white')
         self.sprites = loaded_sprites
         self.geometry(f'+{random.randrange(10, pyautogui.size()[0])}+{LoadConfig().get_config()["cat_position"]-300}')
-        # for some reason tkinter module for screen size is not working as intended
         self.wm_attributes('-topmost', True)
         self.wm_attributes('-transparentcolor', 'white')
         self.lift()
