@@ -121,11 +121,17 @@ class SettingWindow(ctk.CTkToplevel):
         self.pixels_label.configure(text=f'Move cat by: {int(self.offset_size)}px')
 
     def open_json_config_file(self):
-        try:
-            os.system(f'notepad {resource_path('config.json')}')
-            raise SystemError('Not a windows platform')
-        except SystemError:
-            pass
+        os_name = os.name()
+        match os_name:
+            case 'nt':
+                threading.Thread(target=os.system, args=(f'notepad {resource_path('config.json')}', )).start()
+            case 'posix':
+                if 'darwin' in os.uname().sysname.lower():
+                    threading.Thread(target=os.system, args=(f'open {resource_path('config.json')}', )).start() # idk if it will work
+                else:
+                    threading.Thread(target=os.system, args=(f'nano {resource_path('config.json')}', )).start()
+            case _:
+                pass
 
 class Fish(ctk.CTkToplevel):
     def __init__(self, loaded_sprites):
@@ -229,7 +235,7 @@ class IconTray():
 
 class LoadAllSprites():
     def __init__(self, path) -> None:
-        self.all_sprites = []
+        self.all_sprites: list = []
         self.path = path
         self.load_images()
 
@@ -239,7 +245,7 @@ class LoadAllSprites():
             img = ctk.CTkImage(dark_image=img_, size=img_.size)
             self.all_sprites.append(img)
 
-    def get_images(self) -> None:
+    def get_images(self) -> list:
         return self.all_sprites
 
 class Stats(ctk.CTkToplevel):
